@@ -5,6 +5,7 @@ class EditableTable extends Component {
   constructor(props){
     super(props);
     this.state = {
+      title: [{title:"書籍名"}, {title:"著者名"}, {title:"削除"}],
       data: 
         [
           {item1:"たのしいReact入門", item2:"React初心者ユーザグループ"},
@@ -15,22 +16,37 @@ class EditableTable extends Component {
     this.addRow = this.addRow.bind(this);
     this.submitTable = this.submitTable.bind(this);
   }
+  
+  renderHeader() {
+    const header = this.state.title.map((t, index) => {
+      return <th key={index}>{t.title}</th>;
+    });
+    return <tr>{header}</tr>;
+  }
+  
+  renderBody() {
+    return this.state.data.map((row, index) => {
+      return <DeletableRow row={row} key={index} />;
+    });  
+  }
 
   render() {
     return (
         <div className="EditableTable">
-          <table border="1">
+          <form action="./" onSubmit={this.submitTable} method="post">
+          <table id="editabletable" border="1">
             <thead>
               <tr><td><button onClick={this.addRow}>行を追加する</button></td></tr>
             </thead>
             <tbody>
-              <tr><th>書籍名</th><th>著者</th><th>削除</th></tr>
-              <TableContents contents={this.state.data} />
+              {this.renderHeader()}
+              {this.renderBody()}
             </tbody>
             <tfoot>
-              <tr><td><button onClick={this.submitTable}>テーブルの内容を登録する</button></td></tr>
+              <tr><td><input type="submit" value="テーブルの内容を登録する"></input></td></tr>
             </tfoot>
           </table>
+          </form>
         </div>
     );
   }
@@ -43,16 +59,9 @@ class EditableTable extends Component {
   }
   
   submitTable(e) {
-  
-  }
-
-}
-
-class TableContents extends Component {
-  render(){
-    return this.props.contents.map((row, index) => {
-      return <DeletableRow row={row} key={index} />;
-    });
+    // e.preventDefault();
+    console.log(e);
+    
   }
 }
 
@@ -84,16 +93,17 @@ class EditableTd extends Component {
   }
   
   render() {
-    return this.state.editing ? <td onDoubleClick={this.toggleEditState}><input type="text" onChange={this.changeContent} value={this.state.content}></input></td> : <td onDoubleClick={this.toggleEditState}><label onDoubleClick={this.toggleEditState}>{this.state.content}</label></td>;
+    return <td onDoubleClick={this.toggleEditState}><input type="text" onChange={this.changeContent} value={this.state.content} readOnly={this.state.editing ? '' : 'readOnly'}></input></td>;
   }
   
   toggleEditState(e) {
     this.setState({editing: !this.state.editing});  
   }
-  
+
   changeContent(e) {
     this.setState({content: e.target.value});
   }
+
 }
 
 export default EditableTable;

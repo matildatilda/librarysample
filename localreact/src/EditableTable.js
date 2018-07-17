@@ -5,12 +5,12 @@ class EditableTable extends Component {
   constructor(props){
     super(props);
     this.state = {
-      title: [{title:"書籍名"}, {title:"著者名"}, {title:"削除"}],
+      title: [{title:"書籍名"}, {title:"著者名"}],
       data: 
         [
-          {item1:"たのしいReact入門", item2:"React初心者ユーザグループ"},
-          {item1:"実践React", item2:"○○技術社"},
-          {item1:"React 使える作例100", item2:"○○技術社"},
+          [{item:"たのしいReact入門"}, {item:"React初心者ユーザグループ"}],
+          [{item:"実践React"}, {item:"○○技術社"}],
+          [{item:"React 使える作例100"}, {item:"○○技術社"}],
         ]
     };
     this.addRow = this.addRow.bind(this);
@@ -21,7 +21,7 @@ class EditableTable extends Component {
     const header = this.state.title.map((t, index) => {
       return <th key={index}>{t.title}</th>;
     });
-    return <tr>{header}</tr>;
+    return <tr>{header}<th>削除</th></tr>;
   }
   
   renderBody() {
@@ -33,7 +33,7 @@ class EditableTable extends Component {
   render() {
     return (
         <div className="EditableTable">
-          <form action="./" onSubmit={this.submitTable} method="post">
+          <form action="./" onSubmit={this.submitTable} method="get">
           <table id="editabletable" border="1">
             <thead>
               <tr><td><button onClick={this.addRow}>行を追加する</button></td></tr>
@@ -52,15 +52,16 @@ class EditableTable extends Component {
   }
   
   addRow(e) {
-    const newData = {item1: "write here.", item2:"write here."};
+    const newData = [[{item: "write here."}, {item:"write here."}]];
+    newData[0].datastate = "new";
     this.setState(prevState => ({
       data: prevState.data.concat(newData)  
     }));
   }
   
   submitTable(e) {
-    // e.preventDefault();
-    console.log(e);
+    e.preventDefault();
+    console.log(this.state.data);
     
   }
 }
@@ -68,16 +69,45 @@ class EditableTable extends Component {
 class DeletableRow extends Component {
   constructor(props){
     super(props);
-    this.state = {deleted:false};
-    this.deleteContent = this.deleteContent.bind(this);
+    this.state = {
+      row: this.props.row,
+      deleted:false
+    };
+    this.deleteRow = this.deleteRow.bind(this);
+    this.changeItem = this.changeItem.bind(this);
+  }
+
+  renderItem(){
+    return this.state.row.map((col, index) => {
+      const item = {
+        item: col.item,
+        index: index,
+        onChangeContent: this.changeItem
+      };
+      return <EditableTd content={item} key={index} />;
+    });
   }
   
   render(){
-    return <tr hidden={this.state.deleted}><EditableTd content={this.props.row.item1} /><EditableTd content={this.props.row.item2} /><td><button onClick={this.deleteContent}>削除</button></td></tr>;
+    return <tr hidden={this.state.deleted}>
+    {this.renderItem()}
+    <td><button onClick={this.deleteRow}>削除</button></td></tr>;
   }
 
-  deleteContent(e) {
+  deleteRow(e) {
     this.setState({deleted:true});
+    const _row = this.state.row;
+    _row.datastate = "deleted";
+    this.setState({row: _row});
+  }
+  
+  changeItem(content){
+    const _row = this.state.row;
+    if(_row.datastate !== "new"){
+      _row.datastate = "updated";
+    }
+    _row[content.index].item = content.item;
+    this.setState({row: _row});
   }
 }
 
@@ -86,14 +116,14 @@ class EditableTd extends Component {
     super(props);
     this.state = {
       editing:false,
-      content: this.props.content,
+      content: this.props.content
     };
     this.changeContent = this.changeContent.bind(this);
     this.toggleEditState = this.toggleEditState.bind(this);
   }
   
   render() {
-    return <td onDoubleClick={this.toggleEditState}><input type="text" onChange={this.changeContent} value={this.state.content} readOnly={this.state.editing ? '' : 'readOnly'}></input></td>;
+    return <td onDoubleClick={this.toggleEditState}><input type="text" onChange={this.changeContent} value={this.state.content.item} readOnly={this.state.editing ? '' : 'readOnly'}></input></td>;
   }
   
   toggleEditState(e) {
@@ -101,7 +131,10 @@ class EditableTd extends Component {
   }
 
   changeContent(e) {
-    this.setState({content: e.target.value});
+    const _content = this.state.content;
+    _content.item = e.target.value;
+    this.setState({content: _content});
+    this.props.content.onChangeContent(this.state.content);
   }
 
 }
